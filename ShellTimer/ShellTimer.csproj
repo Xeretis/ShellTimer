@@ -8,7 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
+        <PackageReference Include="Spectre.Console.Cli" Version="0.49.1"/>
+        <PackageReference Include="sqlite-net-pcl" Version="1.9.172"/>
     </ItemGroup>
 
 </Project>

@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using ShellTimer.Data;
+using ShellTimer.Data.Models;
 using ShellTimer.Support.Cube;
 using ShellTimer.Support.Enums;
 using Spectre.Console;
@@ -10,6 +12,8 @@ namespace ShellTimer.Commands;
 internal sealed class TimerCommand : Command<TimerCommand.Settings>
 {
     private const int ContentWidth = 80;
+
+    private readonly Database _databaseService = new();
     private static TimerStatus Status { get; set; } = TimerStatus.Waiting;
     private static bool ExitRequested { get; set; }
 
@@ -22,6 +26,8 @@ internal sealed class TimerCommand : Command<TimerCommand.Settings>
         var hasInspection = settings.InspectionTime > 0;
         var skipScrambleScreen = false;
         var nextScramble = ScrambleGenerator.GenerateScramble(settings.CubeSize, settings.ScrambleLength);
+
+        var databaseService = new Database();
 
         while (true)
         {
@@ -81,19 +87,69 @@ internal sealed class TimerCommand : Command<TimerCommand.Settings>
             if (ExitRequested)
                 return 0;
 
-            nextScramble = ScrambleGenerator.GenerateScramble(settings.CubeSize, settings.ScrambleLength);
-            var resultTable = CreateResultTable(stopwatch.Elapsed, nextScramble);
+            var solve = new Solve
+            {
+                TimeInMilliseconds = stopwatch.ElapsedMilliseconds,
+                CubeSize = settings.CubeSize,
+                Scramble = nextScramble,
+                DateTime = DateTime.Now
+            };
 
+            databaseService.SaveSolve(solve);
+
+            nextScramble = ScrambleGenerator.GenerateScramble(settings.CubeSize, settings.ScrambleLength);
+
+            var currentSolve = _databaseService.GetMostRecentSolve(settings.CubeSize);
+            var resultTable = CreateResultTable(stopwatch.Elapsed, nextScramble, settings, currentSolve);
             AnsiConsole.Clear();
             AnsiConsole.Write(resultTable);
 
-            var key2 = Console.ReadKey(true);
-            if (key2.Key == ConsoleKey.Escape)
-                return 0;
-            if (key2.Key != ConsoleKey.Spacebar)
-                continue;
+            while (true)
+            {
+                var key = Console.ReadKey(true);
 
-            skipScrambleScreen = true;
+                if (key.Key == ConsoleKey.Escape)
+                    return 0;
+                if (key.Key == ConsoleKey.Spacebar)
+                {
+                    skipScrambleScreen = true;
+                    break;
+                }
+
+                if (currentSolve != null)
+                {
+                    if ((key.Key == ConsoleKey.D1 || key.Key == ConsoleKey.NumPad1) &&
+                        currentSolve.Penalty != PenaltyType.PlusTwo)
+                    {
+                        _databaseService.UpdateSolvePenalty(currentSolve.Id, PenaltyType.PlusTwo);
+                        currentSolve.Penalty = PenaltyType.PlusTwo;
+
+                        resultTable = CreateResultTable(stopwatch.Elapsed, nextScramble, settings, currentSolve);
+                        AnsiConsole.Clear();
+                        AnsiConsole.Write(resultTable);
+                    }
+                    else if ((key.Key == ConsoleKey.D2 || key.Key == ConsoleKey.NumPad2) &&
+                             currentSolve.Penalty != PenaltyType.DNF)
+                    {
+                        _databaseService.UpdateSolvePenalty(currentSolve.Id, PenaltyType.DNF);
+                        currentSolve.Penalty = PenaltyType.DNF;
+
+                        resultTable = CreateResultTable(stopwatch.Elapsed, nextScramble, settings, currentSolve);
+                        AnsiConsole.Clear();
+                        AnsiConsole.Write(resultTable);
+                    }
+                    else if ((key.Key == ConsoleKey.D3 || key.Key == ConsoleKey.NumPad3) &&
+                             currentSolve.Penalty != PenaltyType.None)
+                    {
+                        _databaseService.UpdateSolvePenalty(currentSolve.Id, PenaltyType.None);
+                        currentSolve.Penalty = PenaltyType.None;
+
+                        resultTable = CreateResultTable(stopwatch.Elapsed, nextScramble, settings, currentSolve);
+                        AnsiConsole.Clear();
+                        AnsiConsole.Write(resultTable);
+                    }
+                }
+            }
         }
     }
 
@@ -164,7 +220,8 @@ internal sealed class TimerCommand : Command<TimerCommand.Settings>
             .HideTags()
             .HideTagValues());
 
-        grid.AddRow(new Padder(new Markup($"{stopwatch.Elapsed}").Centered()).PadTop(1));
+        var formattedTime = FormatTimeSpan(stopwatch.Elapsed);
+        grid.AddRow(new Padder(new Markup(formattedTime).Centered()).PadTop(1));
         grid.Expand = true;
 
         return grid;
@@ -174,7 +231,8 @@ internal sealed class TimerCommand : Command<TimerCommand.Settings>
     {
         var table = new Table();
         table.AddColumn(new TableColumn("[green]Timer[/]").Centered());
-        table.AddRow(new TableRow([new Padder(new Markup($"{stopwatch.Elapsed}")).PadTop(2).PadBottom(2)]));
+        var formattedTime = FormatTimeSpan(stopwatch.Elapsed);
+        table.AddRow(new TableRow([new Padder(new Markup(formattedTime)).PadTop(2).PadBottom(2)]));
         table.Border = TableBorder.HeavyEdge;
         table.Width = ContentWidth;
         return table;
@@ -182,10 +240,12 @@ internal sealed class TimerCommand : Command<TimerCommand.Settings>
 
     private void UpdateTimerTable(Table table, Stopwatch stopwatch)
     {
-        table.Rows.Update(0, 0, new Padder(new Markup($"{stopwatch.Elapsed}")).PadTop(2).PadBottom(2));
+        var formattedTime = FormatTimeSpan(stopwatch.Elapsed);
+        table.Rows.Update(0, 0, new Padder(new Markup(formattedTime)).PadTop(2).PadBottom(2));
     }
 
-    private Table CreateResultTable(TimeSpan elapsedTime, string nextScramble)
+    private Table CreateResultTable(TimeSpan elapsedTime, string nextScramble, Settings settings,
+        Solve? currentSolve = null)
     {
         var table = new Table();
         table.AddColumn(new TableColumn("[blue]Results[/]").Centered());
@@ -194,9 +254,53 @@ internal sealed class TimerCommand : Command<TimerCommand.Settings>
         grid.Width = ContentWidth;
         grid.AddColumn();
 
-        grid.AddRow(new Markup($"[blue]{elapsedTime}[/]").Centered());
+        string formattedTime;
+        if (currentSolve != null && currentSolve.Penalty != PenaltyType.None)
+        {
+            if (currentSolve.Penalty == PenaltyType.DNF)
+            {
+                formattedTime = "DNF";
+            }
+            else
+            {
+                var penaltyTime = TimeSpan.FromMilliseconds(currentSolve.TimeInMilliseconds + 2000);
+                formattedTime = $"{FormatTimeSpan(penaltyTime)} (+2)";
+            }
+        }
+        else
+        {
+            formattedTime = FormatTimeSpan(elapsedTime);
+        }
+
+        grid.AddRow(new Markup($"[blue]{formattedTime}[/]").Centered());
+
         grid.AddEmptyRow();
-        grid.AddRow(new Markup("[yellow]Next scramble:[/]").Centered());
+
+        if (!ExitRequested && currentSolve != null)
+        {
+            if (currentSolve.Penalty == PenaltyType.None)
+                grid.AddRow(new Markup("[grey]Press 1 for +2 penalty, 2 for DNF[/]").Centered());
+            else
+                grid.AddRow(new Markup("[grey]Press 3 to remove penalty[/]").Centered());
+            grid.AddEmptyRow();
+        }
+
+        var pb = _databaseService.GetPersonalBest(settings.CubeSize);
+        var ao5 = _databaseService.GetAverageOf(5, settings.CubeSize);
+        var ao12 = _databaseService.GetAverageOf(12, settings.CubeSize);
+        var ao100 = _databaseService.GetAverageOf(100, settings.CubeSize);
+
+        var pbFormatted = FormatTimeSpan(pb);
+        var ao5Formatted = FormatTimeSpan(ao5);
+        var ao12Formatted = FormatTimeSpan(ao12);
+        var ao100Formatted = FormatTimeSpan(ao100);
+
+        var statsLine =
+            $"[green]PB: {pbFormatted}[/] [cyan]Ao5: {ao5Formatted}[/] [orange1]Ao12: {ao12Formatted}[/] [magenta]Ao100: {ao100Formatted}[/]";
+        grid.AddRow(new Markup(statsLine).Centered());
+
+        grid.AddEmptyRow();
+        grid.AddRow(new Markup("Next scramble:").Centered());
         grid.AddRow(new Markup($"[yellow]{nextScramble}[/]").Centered());
         grid.AddEmptyRow();
         grid.AddRow(new Markup("[white]Press SPACE to start again or ESC to exit[/]").Centered());
@@ -206,6 +310,17 @@ internal sealed class TimerCommand : Command<TimerCommand.Settings>
         table.Width = ContentWidth;
 
         return table;
+    }
+
+    private string FormatTimeSpan(TimeSpan? time)
+    {
+        if (!time.HasValue)
+            return "-";
+
+        if (time.Value == TimeSpan.MaxValue)
+            return "DNF";
+
+        return $"{time.Value.Minutes:D2}:{time.Value.Seconds:D2}.{time.Value.Milliseconds:D3}";
     }
 
     private static void ListenForKeyBoardEvent(CancellationToken cancellationToken)

@@ -7,7 +7,11 @@ var app = new CommandApp();
 
 app.Configure(config =>
 {
-    config.AddCommand<TimerCommand>("timer");
+    config.AddCommand<TimerCommand>("timer")
+        .WithDescription("Start timing solves");
+
+    config.AddCommand<ClearCommand>("clear")
+        .WithDescription("Clear all solve records from the database");
 });
 
 return app.Run(args);
