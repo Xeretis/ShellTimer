@@ -2,5 +2,5 @@ namespace ShellTimer.Support.Enums;
 
 public enum TimerStatus
 {
-    Waiting, Started, Stopped
+    Waiting, Inspection, Started, Stopped
 }
