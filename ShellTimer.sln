@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShellTimer", "ShellTimer\ShellTimer.csproj", "{42DF5080-55FA-4CFB-A134-C7FC6C2C34B4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShellTimer.Cli", "ShellTimer.Cli\ShellTimer.Cli.csproj", "{42DF5080-55FA-4CFB-A134-C7FC6C2C34B4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

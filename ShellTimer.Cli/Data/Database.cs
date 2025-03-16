@@ -1,9 +1,9 @@
-using ShellTimer.Data.Models;
+using ShellTimer.Cli.Data.Models;
 using SQLite;
 
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
-namespace ShellTimer.Data;
+namespace ShellTimer.Cli.Data;
 
 public class Database
 {
@@ -25,6 +25,18 @@ public class Database
     public void SaveSolve(Solve solve)
     {
         _database.Insert(solve);
+    }
+
+    public List<Solve> GetAllSolves(int cubeSize)
+    {
+        return _database.Table<Solve>()
+            .Where(s => s.CubeSize == cubeSize)
+            .ToList();
+    }
+
+    public List<Solve> GetAllSolves()
+    {
+        return _database.Table<Solve>().ToList();
     }
 
     public Solve? GetMostRecentSolve(int cubeSize)
@@ -101,6 +113,17 @@ public class Database
             return TimeSpan.MaxValue;
 
         return TimeSpan.FromMilliseconds(times.Average());
+    }
+
+    public Solve? GetSolveById(int id)
+    {
+        return _database.Table<Solve>()
+            .FirstOrDefault(s => s.Id == id);
+    }
+
+    public void DeleteSolve(int id)
+    {
+        _database.Delete<Solve>(id);
     }
 
     public void UpdateSolvePenalty(int solveId, PenaltyType penalty)

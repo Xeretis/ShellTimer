@@ -1,6 +1,6 @@
 using SQLite;
 
-namespace ShellTimer.Data.Models;
+namespace ShellTimer.Cli.Data.Models;
 
 public class Solve
 {

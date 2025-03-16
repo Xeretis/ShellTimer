@@ -1,13 +1,13 @@
 using System.ComponentModel;
 using System.Diagnostics;
-using ShellTimer.Data;
-using ShellTimer.Data.Models;
-using ShellTimer.Support.Cube;
-using ShellTimer.Support.Enums;
+using ShellTimer.Cli.Data;
+using ShellTimer.Cli.Data.Models;
+using ShellTimer.Cli.Support.Cube;
+using ShellTimer.Cli.Support.Enums;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace ShellTimer.Commands;
+namespace ShellTimer.Cli.Commands;
 
 internal sealed class TimerCommand : Command<TimerCommand.Settings>
 {

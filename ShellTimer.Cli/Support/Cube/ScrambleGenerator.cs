@@ -1,11 +1,12 @@
-namespace ShellTimer.Support.Cube;
+namespace ShellTimer.Cli.Support.Cube;
 
+// Based on the official WCA approved scramble generator
 public static class ScrambleGenerator
 {
     private static readonly Random Random = new();
 
-    private static readonly char[] Faces = { 'U', 'D', 'R', 'L', 'F', 'B' };
-    private static readonly string[] TurnSuffixes = { "", "'", "2" };
+    private static readonly char[] Faces = ['U', 'D', 'R', 'L', 'F', 'B'];
+    private static readonly string[] TurnSuffixes = ["", "'", "2"];
 
     public static string GenerateScramble(int size, int? length = null)
     {
