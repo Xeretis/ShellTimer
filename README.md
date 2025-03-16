@@ -47,7 +47,7 @@ My primary motivation for creating this project was to create something actually
 
 4. Run the application (for development only):
    ```bash
-   dotnet run
+   cd ShellTimer.Cli && dotnet run
    ```
 
 ## Usage
