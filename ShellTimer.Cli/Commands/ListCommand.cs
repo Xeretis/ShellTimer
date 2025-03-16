@@ -8,9 +8,9 @@ namespace ShellTimer.Cli.Commands;
 
 public class ListCommand : Command<ListCommand.Settings>
 {
+    private const int ContentWidth = 80;
+    private const int ItemsPerPage = 10;
     private readonly Database _databaseService = new();
-    private readonly int ContentWidth = 80;
-    private readonly int ItemsPerPage = 10;
 
     public override int Execute(CommandContext context, Settings settings)
     {
@@ -73,7 +73,7 @@ public class ListCommand : Command<ListCommand.Settings>
     {
         var title = cubeSize.HasValue
             ? $"[blue]Solve History for {cubeSize}x{cubeSize} Cube[/]"
-            : "[blue]All Solve History[/]";
+            : "[blue]Solve History[/]";
 
         var table = new Table().Border(TableBorder.HeavyEdge).Width(ContentWidth);
         table.AddColumn(new TableColumn(title).Centered());

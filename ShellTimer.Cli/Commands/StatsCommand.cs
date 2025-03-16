@@ -8,9 +8,9 @@ namespace ShellTimer.Cli.Commands;
 
 public class StatsCommand : Command<StatsCommand.Settings>
 {
+    private const int ContentWidth = 80;
+    private const int SolvesPerPage = 10;
     private readonly Database _databaseService = new();
-    private readonly int ContentWidth = 80;
-    private readonly int SolvesPerPage = 10;
 
     public override int Execute(CommandContext context, Settings settings)
     {
