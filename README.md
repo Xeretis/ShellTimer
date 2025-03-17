@@ -11,12 +11,7 @@ My primary motivation for creating this project was to create something actually
 
 ## Features
 
-- [x] Support for different cube sizes (2x2, 3x3, 4x4, etc.)
-- [x] Configurable inspection time
-- [x] Scramble generation
-- [x] Support for penalties (+2, DNF)
-- [x] Solve history
-- [x] Solve statistics (PB, Ao5, Ao12, Ao100)
+
 
 ### Roadmap
 

@@ -1,0 +1,6 @@
+﻿services:
+  shelltimer.webapi:
+    image: shelltimer.webapi
+    build:
+      context: .
+      dockerfile: ShellTimer.WebApi/Dockerfile
