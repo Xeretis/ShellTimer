@@ -6,6 +6,10 @@ using ShellTimer.WebApi.Models;
 
 namespace ShellTimer.WebApi.Services.Hosted;
 
+/// <summary>
+///     Background service that processes duel events and manages duel lifecycle.
+///     Handles communication between duel participants via SignalR.
+/// </summary>
 public class DuelService : BackgroundService
 {
     private readonly ChannelReader<DuelEvent> _duelEvents;
@@ -25,6 +29,11 @@ public class DuelService : BackgroundService
         _duelManager = duelManager;
     }
 
+    /// <summary>
+    ///     Executes the background service to process duel events.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token to stop the service.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Duel service started");
@@ -41,6 +50,11 @@ public class DuelService : BackgroundService
             }
     }
 
+    /// <summary>
+    ///     Processes a duel event by dispatching to the appropriate handler.
+    /// </summary>
+    /// <param name="event">The duel event to process.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task ProcessEventAsync(DuelEvent @event)
     {
         switch (@event.Type)
@@ -63,6 +77,12 @@ public class DuelService : BackgroundService
         }
     }
 
+    /// <summary>
+    ///     Handles creation of a new duel.
+    ///     Generates a scramble and notifies the host.
+    /// </summary>
+    /// <param name="event">The duel created event details.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task HandleDuelCreatedAsync(DuelEvent @event)
     {
         var scramble = ScrambleGenerator.GenerateScramble(
@@ -78,6 +98,12 @@ public class DuelService : BackgroundService
             await _hubContext.Clients.Client(@event.ConnectionId).DuelCreated(@event.DuelCode);
     }
 
+    /// <summary>
+    ///     Handles a player joining an existing duel.
+    ///     Notifies both players that the duel is ready to begin.
+    /// </summary>
+    /// <param name="event">The duel joined event details.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task HandleDuelJoinedAsync(DuelEvent @event)
     {
         if (!_duelManager.TryGetDuel(@event.DuelCode, out var duel) ||
@@ -89,6 +115,12 @@ public class DuelService : BackgroundService
             .DuelReady(@event.DuelCode, duel.Scramble, duel.CubeSize, duel.InspectionTime);
     }
 
+    /// <summary>
+    ///     Handles a player marking themselves as ready.
+    ///     When both players are ready, the duel starts.
+    /// </summary>
+    /// <param name="event">The player ready event details.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task HandlePlayerReadyAsync(DuelEvent @event)
     {
         if (!_duelManager.TryGetDuel(@event.DuelCode, out var duel) ||
@@ -100,6 +132,12 @@ public class DuelService : BackgroundService
             .DuelStarted();
     }
 
+    /// <summary>
+    ///     Handles a player exiting the duel.
+    ///     Notifies the other player if the duel is cancelled.
+    /// </summary>
+    /// <param name="event">The duel exited event details.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task HandleDuelExitedAsync(DuelEvent @event)
     {
         if (_duelManager.TryRemoveParticipant(@event.DuelCode, @event.ConnectionId, out var otherParticipantId) &&
@@ -107,6 +145,12 @@ public class DuelService : BackgroundService
             await _hubContext.Clients.Client(otherParticipantId).DuelCancelled();
     }
 
+    /// <summary>
+    ///     Handles a player completing their solve.
+    ///     When both players have completed, calculates the result and notifies both players.
+    /// </summary>
+    /// <param name="event">The solve finished event details.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task HandleSolveFinishedAsync(DuelEvent @event)
     {
         if (!_duelManager.TrySetSolveTime(@event.DuelCode, @event.ConnectionId, @event.SolveTime!.Value) ||
