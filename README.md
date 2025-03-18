@@ -57,7 +57,7 @@ Run the application without any commands to see the help menu:
 
 ```
 USAGE:
-    ShellTimer.Cli.dll [OPTIONS] <COMMAND>
+    ShellTimer.Cli [OPTIONS] <COMMAND>
 
 OPTIONS:
     -h, --help    Prints help information
@@ -67,6 +67,8 @@ COMMANDS:
     scramble    Generate scrambles for a specific cube size
     solves      Manage solve records
     stats       Show statistics for a specific cube size
+    duel        Duel an other ShellTimer user in real-time
+    config      Configure ShellTimer with application wide settings
 ```
 
 ```
