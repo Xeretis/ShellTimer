@@ -11,11 +11,17 @@ My primary motivation for creating this project was to create something actually
 
 ## Features
 
-
+- [x] **NEW:** Multiplayer duels in real-time (using WebSockets)
+- [x] Support for different cube sizes (2x2, 3x3, 4x4, etc.)
+- [x] Configurable inspection time
+- [x] Scramble generation
+- [x] Support for penalties (+2, DNF)
+- [x] Solve history
+- [x] Solve statistics (PB, Ao5, Ao12, Ao100)
 
 ### Roadmap
 
-- [ ] Add a multiplayer racing mode (using SignalR) - Already in the works!
+- [ ] Add support for taking over a duel (partially implemented on the backend)
 - [ ] Add an option to export the solve history to a file
 - [ ] Add support for multiple sessions
 - [ ] Add an algorithm practice tool
