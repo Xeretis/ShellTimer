@@ -51,6 +51,27 @@ My primary motivation for creating this project was to create something actually
    cd ShellTimer.Cli && dotnet run
    ```
 
+## Running the backend in development (optional)
+
+```bash
+cd ShellTimer.WebApi && dotnet run
+```
+
+After running the command above, the backend should be accessible at `http://localhost:5212`, set this as your duel service url using the `config` command. 
+
+## Running the backend in production
+
+1. Make sure you have [Docker](https://docs.docker.com/engine/install/) and [Docker Compose](https://docs.docker.com/compose/install/) installed:
+   ```bash
+   docker compose
+   ```
+2. Run the docker compose defined at the root of the repository:
+   ```bash
+   docker compose up -d
+   ```
+   
+The backend should now be accessible on `http://0.0.0.0:8080`. I recommend adding a reverse proxy in front of the backend in production.
+
 ## Usage
 
 Run the application without any commands to see the help menu:
