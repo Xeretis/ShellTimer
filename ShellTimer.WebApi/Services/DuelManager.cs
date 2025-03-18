@@ -2,10 +2,24 @@ using ShellTimer.WebApi.Models;
 
 namespace ShellTimer.WebApi.Services;
 
-public class DuelManager
+public class DuelManager : IDisposable
 {
+    private readonly Timer _cleanupTimer;
     private readonly Dictionary<string, DuelState> _duels = new();
+    private readonly TimeSpan _inactiveThreshold = TimeSpan.FromHours(1);
+
+    public DuelManager()
+    {
+        _cleanupTimer = new Timer(CleanupInactiveDuels, null, TimeSpan.Zero, TimeSpan.FromMinutes(10));
+    }
+
     public IReadOnlyDictionary<string, DuelState> Duels => _duels;
+
+    public void Dispose()
+    {
+        _cleanupTimer?.Dispose();
+    }
+
 
     public bool TryCreateDuel(string duelCode, string hostConnectionId, int cubeSize, int inspectionTime,
         string scramble)
@@ -18,7 +32,8 @@ public class DuelManager
             HostConnectionId = hostConnectionId,
             Scramble = scramble,
             CubeSize = cubeSize,
-            InspectionTime = inspectionTime
+            InspectionTime = inspectionTime,
+            CreatedAt = DateTime.UtcNow
         });
         return true;
     }
@@ -107,6 +122,20 @@ public class DuelManager
     public void RemoveDuel(string duelCode)
     {
         _duels.Remove(duelCode);
+    }
+
+    private void CleanupInactiveDuels(object? state)
+    {
+        var now = DateTime.UtcNow;
+        var keysToRemove = new List<string>();
+
+        foreach (var (code, duel) in _duels)
+            // Remove duels that have been waiting for opponent for more than an hour
+            if (duel.ChallengedConnectionId == null &&
+                now - duel.CreatedAt > _inactiveThreshold)
+                keysToRemove.Add(code);
+
+        foreach (var key in keysToRemove) _duels.Remove(key);
     }
 
     public bool TryGetDuel(string duelCode, out DuelState duel)

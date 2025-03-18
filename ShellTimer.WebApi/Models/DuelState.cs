@@ -13,6 +13,8 @@ public class DuelState
     public int? HostSolveTime { get; set; }
     public int? ChallengedSolveTime { get; set; }
 
+    public DateTime CreatedAt { get; set; }
+
     public bool AreBothPlayersReady => HostReady && ChallengerReady && ChallengedConnectionId != null;
 
     public bool AreBothSolvesComplete =>
