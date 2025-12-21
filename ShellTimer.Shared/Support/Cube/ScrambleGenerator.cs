@@ -31,55 +31,33 @@ public static class ScrambleGenerator
         if (size == 2)
             return GenerateScrambleForSize2((int)length);
 
-        var scrambleMoves = new List<string>();
-        var lastAxisFace = new[] { -1, -1 };
-
-        for (var i = 0; i < length; i++)
+        var scramble = new List<string>();
+        var moves = new[] {"U", "D", "R", "L", "F", "B"};
+        for (int i = 0; i < length; i++)
         {
-            int axis, face;
-
-            do
+            string randomMove = moves[Random.Next(moves.Length)];
+            while ((scramble.Count >= 1 && scramble[i - 1] == randomMove) ||
+                   (scramble.Count >= 2 && scramble[i - 2] == randomMove))
             {
-                axis = Random.Next(3);
-                face = Random.Next(2);
-            } while (axis == lastAxisFace[0] && axis == lastAxisFace[1]);
-
-            lastAxisFace[1] = lastAxisFace[0];
-            lastAxisFace[0] = axis;
-
-            var faceChar = Faces[axis * 2 + face];
-
-            var isInnerSlice = false;
-            var sliceIndex = -1;
-
-            if (size > 3)
-            {
-                isInnerSlice = Random.Next(3) == 0 && i < length - 1;
-
-                if (isInnerSlice) sliceIndex = Random.Next(1, size / 2); // Inner slice index
+                randomMove = moves[Random.Next(moves.Length)];
             }
-
-            var turnSuffix = TurnSuffixes[Random.Next(TurnSuffixes.Length)];
-
-            string move;
-            if (isInnerSlice)
-            {
-                move = $"{sliceIndex + 1}{faceChar}{turnSuffix}";
-            }
-            else if (size > 3 && Random.Next(10) < 3)
-            {
-                var width = Random.Next(2, Math.Min(size, 4));
-                move = $"{width}{faceChar}w{turnSuffix}";
-            }
-            else
-            {
-                move = $"{faceChar}{turnSuffix}";
-            }
-
-            scrambleMoves.Add(move);
+            scramble.Add(randomMove);
         }
-
-        return string.Join(" ", scrambleMoves);
+        for (int j = 0; j < scramble.Count; j++)
+        {
+            var suffixRandom = Random.Next(1, 3); // 1: "", 2: "'", 3: "2"
+            if (suffixRandom == 1)
+            {
+                scramble[j] += "";
+            }else if (suffixRandom == 2)
+            {
+                scramble[j] += "'";
+            }else if (suffixRandom == 3)
+            {
+                scramble[j] += "2";
+            }
+        }
+        return string.Join(" ", scramble);
     }
 
     private static string GenerateScrambleForSize2(int length)
